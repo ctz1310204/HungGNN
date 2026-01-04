@@ -13,7 +13,7 @@ from torch_geometric.data import Data
 # np.random.seed(184)
 
 my_parser = argparse.ArgumentParser()
-my_parser.add_argument('--mode',                                    help='train or generate')
+my_parser.add_argument('--mode',        default = 'train',                    help='train or generate')
 my_parser.add_argument('--id',          type=str,                   help='experiment ID')
 my_parser.add_argument('--n',           type=int, default = 4,      help='LSAP problem dimension')
 my_parser.add_argument('--h',           type=int, default = 32,     help='GNN hidden dimension')

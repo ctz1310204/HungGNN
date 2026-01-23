@@ -81,6 +81,7 @@ def validate_random_fn(model, loss_fn, val_iters, param_dict):
 
 
 def generate_data(n_samples, param_dict, fname):
+    # Original: Generate float data in [0, K) range
     cm = param_dict['K'] * np.random.random_sample((1, param_dict['N'], param_dict['N']))
     for t in tqdm(range(1, n_samples)):
         cm2 = param_dict['K'] * np.random.random_sample((1, param_dict['N'], param_dict['N']))

@@ -1,0 +1,4 @@
+Experiment: gnn_4x4_original
+Saved: 20260117_162850
+Models:        6 checkpoints
+TensorBoard: events.out.tfevents.1768639745.MacBook-Pro-7.local.4676.0

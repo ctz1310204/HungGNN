@@ -8,6 +8,7 @@ from helper_fn import validate_fixed_fn, validate_random_fn, get_adj, generate_d
 from networks import HGNN
 import torch
 from torch_geometric.data import Data
+from utils.logger import Logger
 
 # torch.manual_seed(184)
 # np.random.seed(184)
@@ -48,7 +49,10 @@ def start_train():
     train_iters = args.train_it
     val_iters = args.val_it
     epochs = args.e
-
+    
+    # Initialize logger
+    logger = Logger(enable_logging=True, log_dir=None)
+    
     loss_list = []
     eval_acc_list = []
     eval_loss_list = []
@@ -113,6 +117,14 @@ def start_train():
 
             # update weights
             optimizer.step()
+            
+            # Log to TensorBoard every 100 iterations
+            global_step = epoch * train_iters + t_idx
+            if global_step % 100 == 0:
+                logger.add_scalar('Train/Loss_Row', loss_1.item(), global_step)
+                logger.add_scalar('Train/Loss_Col', loss_2.item(), global_step)
+                logger.add_scalar('Train/Loss_Total', total_loss.item(), global_step)
+                logger.flush()
 
         loss_list.append(epoch_total_loss / train_iters)
 
@@ -127,6 +139,11 @@ def start_train():
         print(f' Accuracy: {(100 * eval_correct):.4f}% - loss: {eval_loss:.12f}')
         print('')
         
+        # Log validation metrics
+        logger.add_scalar('Val/Accuracy', eval_correct, epoch)
+        logger.add_scalar('Val/Loss', eval_loss, epoch)
+        logger.flush()
+        
     # save results and model
     perf_dict = {'eval_accuracy': eval_acc_list, 'eval_loss': eval_loss_list} 
     df = pd.DataFrame(perf_dict)
@@ -134,6 +151,7 @@ def start_train():
     print('log saved')
     torch.save(model.state_dict(), 'trained_net_' + args.id + '.pth')
     print('model saved')
+    logger.close()
 
 
 def start_test():

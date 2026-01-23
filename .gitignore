@@ -71,3 +71,5 @@ Thumbs.db
 .DS_Store
 comparison_results.txt
 log_paper_setup.csv
+
+.venv-1

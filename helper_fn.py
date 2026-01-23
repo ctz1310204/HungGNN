@@ -45,13 +45,15 @@ def validate_fixed_fn(model, loss_fn, val_data, param_dict):
         loss_1 = loss_fn(pred, torch.from_numpy(c))
         d = np.argsort(c)
         loss_2 = loss_fn(pred.T, torch.from_numpy(d))
-        eval_loss = loss_1.item() + loss_2.item()
+        # FIX: Accumulate total loss (CrossEntropyLoss already averages over batch)
+        eval_loss += (loss_1.item() + loss_2.item())
         t_idx = avoid_coll(pred.detach().numpy(), param_dict)
         # soft threshold criterion
         for a_idx in range(param_dict['N']):
             if t_idx[a_idx] == c[a_idx]:
                 correct += 1
         eval_correct += (correct / param_dict['N'])
+    # Average over all validation samples
     return eval_correct / len(val_data), eval_loss / len(val_data)
 
 
@@ -81,10 +83,12 @@ def validate_random_fn(model, loss_fn, val_iters, param_dict):
 
 
 def generate_data(n_samples, param_dict, fname):
-    # Original: Generate float data in [0, K) range
-    cm = param_dict['K'] * np.random.random_sample((1, param_dict['N'], param_dict['N']))
+    # TEST: Generate in [-1e10, 1e10] then normalize to [-1, 1] (like DL-based_LAP original)
+    cm = np.random.uniform(-1e10, 1e10, (1, param_dict['N'], param_dict['N']))
+    cm = cm / 1e10  # Normalize to [-1, 1]
     for t in tqdm(range(1, n_samples)):
-        cm2 = param_dict['K'] * np.random.random_sample((1, param_dict['N'], param_dict['N']))
+        cm2 = np.random.uniform(-1e10, 1e10, (1, param_dict['N'], param_dict['N']))
+        cm2 = cm2 / 1e10  # Normalize to [-1, 1]
         cm = np.concatenate((cm, cm2))
     np.save(fname, cm)
     print('done')

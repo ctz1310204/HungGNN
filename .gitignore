@@ -73,3 +73,4 @@ comparison_results.txt
 log_paper_setup.csv
 
 .venv-1
+experiment/ 

@@ -30,8 +30,25 @@ import torch
 from torch_geometric.data import Data
 from utils.logger import Logger  # TensorBoard logging
 
-def train_paper_setup(resume=False, resume_epoch=0):
+def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
     """Train hoặc resume training với paper configuration"""
+    
+    # Get script directory for relative paths
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    
+    # Generate experiment name if not provided
+    if experiment_name is None:
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        experiment_name = f'gnn_4x4_{timestamp}'
+    
+    # Create experiment folder path
+    EXPERIMENT_FOLDER = os.path.join(SCRIPT_DIR, "experiments", experiment_name)
+    
+    # Create experiment folder if not exists
+    if not os.path.exists(EXPERIMENT_FOLDER):
+        os.makedirs(EXPERIMENT_FOLDER)
+        print(f"✓ Created experiment folder: {EXPERIMENT_FOLDER}")
     
     # Paper hyperparameters
     param_dict = {
@@ -69,7 +86,7 @@ def train_paper_setup(resume=False, resume_epoch=0):
     eval_loss_list = []
     
     if resume:
-        checkpoint_path = f'trained_net_paper_setup_epoch{resume_epoch}.pth'
+        checkpoint_path = os.path.join(EXPERIMENT_FOLDER, f'trained_net_paper_setup_epoch{resume_epoch}.pth')
         if not os.path.exists(checkpoint_path):
             print(f"ERROR: Checkpoint not found: {checkpoint_path}")
             print("Available checkpoints:")
@@ -83,8 +100,9 @@ def train_paper_setup(resume=False, resume_epoch=0):
         print("✅ Checkpoint loaded successfully!")
         
         # Load existing log
-        if os.path.exists('log_paper_setup.csv'):
-            df_old = pd.read_csv('log_paper_setup.csv')
+        csv_path = os.path.join(EXPERIMENT_FOLDER, 'log_paper_setup.csv')
+        if os.path.exists(csv_path):
+            df_old = pd.read_csv(csv_path)
             eval_acc_list = df_old['eval_accuracy'].tolist()
             eval_loss_list = df_old['eval_loss'].tolist()
             print(f"Loaded {len(eval_acc_list)} previous epoch results")
@@ -117,7 +135,8 @@ def train_paper_setup(resume=False, resume_epoch=0):
     edge_index = get_adj(param_dict['N'])
     
     # Initialize TensorBoard logger
-    logger = Logger(enable_logging=True, log_dir=None)
+    log_dir = os.path.join(EXPERIMENT_FOLDER, "logs")
+    logger = Logger(enable_logging=True, log_dir=log_dir)
     
     print("\n" + "="*70)
     if resume:
@@ -133,6 +152,8 @@ def train_paper_setup(resume=False, resume_epoch=0):
     print(f"Current LR: {optimizer.param_groups[0]['lr']:.6f}")
     print(f"Weight decay: 5e-4")
     print(f"Batch size: 1 (online learning)")
+    print(f"Experiment: {experiment_name}")
+    print(f"Experiment folder: {EXPERIMENT_FOLDER}")
     print(f"TensorBoard: {logger.writer.log_dir if logger.writer else 'disabled'}")
     print("="*70 + "\n")
     
@@ -194,11 +215,11 @@ def train_paper_setup(resume=False, resume_epoch=0):
         
         # Save checkpoint every 10 epochs
         if (epoch + 1) % 10 == 0:
-            torch.save(model.state_dict(), f'trained_net_paper_setup_epoch{epoch+1}.pth')
+            torch.save(model.state_dict(), os.path.join(EXPERIMENT_FOLDER, f'trained_net_paper_setup_epoch{epoch+1}.pth'))
             print(f'  → Checkpoint saved: epoch {epoch+1}')
     
     # Save final model
-    torch.save(model.state_dict(), 'trained_net_paper_setup_final.pth')
+    torch.save(model.state_dict(), os.path.join(EXPERIMENT_FOLDER, 'trained_net_paper_setup_final.pth'))
     
     # Close logger
     logger.close()
@@ -209,16 +230,17 @@ def train_paper_setup(resume=False, resume_epoch=0):
         'eval_accuracy': eval_acc_list,
         'eval_loss': eval_loss_list
     })
-    df.to_csv('log_paper_setup.csv', index=False)
+    df.to_csv(os.path.join(EXPERIMENT_FOLDER, 'log_paper_setup.csv'), index=False)
     
     print("\n" + "="*70)
     print("TRAINING COMPLETED!")
     print("="*70)
     print(f"Final validation accuracy: {eval_acc*100:.2f}%")
     print(f"Expected to match paper: ~96-97%")
-    print("Models saved:")
-    print("  - trained_net_paper_setup_final.pth")
-    print("  - log_paper_setup.csv")
+    print("Models saved to experiment folder:")
+    print(f"  - {EXPERIMENT_FOLDER}/trained_net_paper_setup_final.pth")
+    print(f"  - {EXPERIMENT_FOLDER}/log_paper_setup.csv")
+    print(f"  - {EXPERIMENT_FOLDER}/logs/ (TensorBoard)")
     print("="*70)
     
     # Inference time measurement
@@ -300,6 +322,9 @@ if __name__ == '__main__':
                         help='Resume training from checkpoint')
     parser.add_argument('--resume_epoch', type=int, default=30,
                         help='Epoch number to resume from (default: 30)')
+    parser.add_argument('--experiment_name', type=str, default=None,
+                        help='Experiment name (default: auto-generated with timestamp)')
     args = parser.parse_args()
     
-    model = train_paper_setup(resume=args.resume, resume_epoch=args.resume_epoch)
+    model = train_paper_setup(resume=args.resume, resume_epoch=args.resume_epoch,
+                          experiment_name=args.experiment_name)

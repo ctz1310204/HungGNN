@@ -83,15 +83,33 @@ def validate_random_fn(model, loss_fn, val_iters, param_dict):
 
 
 def generate_data(n_samples, param_dict, fname):
-    # TEST: Generate in [-1e10, 1e10] then normalize to [-1, 1] (like DL-based_LAP original)
-    cm = np.random.uniform(-1e10, 1e10, (1, param_dict['N'], param_dict['N']))
-    cm = cm / 1e10  # Normalize to [-1, 1]
+    """
+    Generate fixed-size NxN cost matrices (matching wcl_lsap approach).
+    
+    Args:
+        n_samples: Number of samples to generate
+        param_dict: Dictionary with 'N' key for problem size (e.g., N=4)
+        fname: Filename to save data
+    
+    For N=4: Always generates 4x4 matrices, no padding, no normalization.
+    """
+    N = param_dict['N']
+    
+    print(f'Generating {n_samples} samples (fixed {N}x{N} matrices)...')
+    
+    # Generate first sample
+    cost_matrix = np.random.uniform(-100, 100, (N, N))
+    cm = cost_matrix.reshape(1, N, N)
+    
+    # Generate remaining samples
     for t in tqdm(range(1, n_samples)):
-        cm2 = np.random.uniform(-1e10, 1e10, (1, param_dict['N'], param_dict['N']))
-        cm2 = cm2 / 1e10  # Normalize to [-1, 1]
-        cm = np.concatenate((cm, cm2))
+        cost_matrix = np.random.uniform(-100, 100, (N, N))
+        cm2 = cost_matrix.reshape(1, N, N)
+        cm = np.concatenate((cm, cm2), axis=0)
+    
     np.save(fname, cm)
-    print('done')
+    print(f'Saved {n_samples} samples of shape ({N}, {N}) to {fname}')
+
 
 
 def comprehensive_test(model, loss_fn, test_data, param_dict):

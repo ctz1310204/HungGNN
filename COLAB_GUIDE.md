@@ -7,13 +7,12 @@
 !git clone https://github.com/ctz1310204/HungGNN.git
 %cd HungGNN
 
-# 2. Install dependencies (UPDATED for compatibility)
-!pip install torch torchvision torchaudio
-!pip install torch-geometric
-!pip install scipy pandas tqdm tensorboard matplotlib seaborn
+# 2. Install dependencies (PyTorch 2.x pre-installed on Colab)
+!pip install torch-geometric scipy pandas tqdm
 
-# 3. (Optional) Install PyG with CUDA support for faster training
-# !pip install pyg-lib torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.0.0+cu118.html
+# 3. (Optional) If torch-geometric fails, install manually:
+# !pip install torch torchvision torchaudio
+# !pip install torch-geometric
 
 # 4. Select GPU Runtime
 # Runtime → Change runtime type → Hardware accelerator: GPU → T4 GPU
@@ -32,11 +31,10 @@ print(f"✅ GPU Name: {torch.cuda.get_device_name(0) if torch.cuda.is_available(
 ## ⚡ One-Line Installation Script
 
 ```python
-# Copy-paste all at once (UPDATED)
+# Copy-paste all at once
 !git clone https://github.com/ctz1310204/HungGNN.git && \
 cd HungGNN && \
-pip install -q torch torchvision torchaudio && \
-pip install -q torch-geometric scipy pandas tqdm tensorboard && \
+pip install -q torch-geometric scipy pandas tqdm && \
 python train_paper.py
 ```
 

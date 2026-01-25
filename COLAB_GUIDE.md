@@ -7,13 +7,13 @@
 !git clone https://github.com/ctz1310204/HungGNN.git
 %cd HungGNN
 
-# 2. Install PyTorch Geometric (REQUIRED for Colab)
-!pip install torch==1.11.0
-!pip install torch-scatter torch-sparse torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cu113.html
+# 2. Install dependencies (UPDATED for compatibility)
+!pip install torch torchvision torchaudio
 !pip install torch-geometric
+!pip install scipy pandas tqdm tensorboard matplotlib seaborn
 
-# 3. Install other dependencies
-!pip install scipy pandas tqdm tensorboard
+# 3. (Optional) Install PyG with CUDA support for faster training
+# !pip install pyg-lib torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.0.0+cu118.html
 
 # 4. Select GPU Runtime
 # Runtime → Change runtime type → Hardware accelerator: GPU → T4 GPU
@@ -32,11 +32,10 @@ print(f"✅ GPU Name: {torch.cuda.get_device_name(0) if torch.cuda.is_available(
 ## ⚡ One-Line Installation Script
 
 ```python
-# Copy-paste all at once
+# Copy-paste all at once (UPDATED)
 !git clone https://github.com/ctz1310204/HungGNN.git && \
 cd HungGNN && \
-pip install -q torch==1.11.0 && \
-pip install -q torch-scatter torch-sparse torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cu113.html && \
+pip install -q torch torchvision torchaudio && \
 pip install -q torch-geometric scipy pandas tqdm tensorboard && \
 python train_paper.py
 ```
@@ -72,8 +71,7 @@ drive.mount('/content/drive')
 
 # Install dependencies (still required each session)
 !pip install -q torch==1.11.0
-!pip install -q torch-scatter torch-sparse torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cu113.html
-!pip install -q torch-geometric scipy pandas tqdm tensorboard
+!pip install -q torch torchvision torchaudio
 
 # Train - models saved to Drive
 !python train_paper.py
@@ -108,14 +106,14 @@ drive.mount('/content/drive')
 | Package | Version | Purpose |
 |---------|---------|---------|
 | **torch** | 1.11.0 | PyTorch deep learning |
-| **torch-geometric** | 2.0.4 | Graph neural networks |
-| **torch-scatter/sparse/cluster** | 2.0.x/0.6.x/1.6.x | PyG dependencies |
-| **scipy** | 1.8.1 | Hungarian algorithm |
+| **torch-geom>=1.13.0 | PyTorch deep learning |
+| **torch-geometric** | >=2.3.0 | Graph neural networks |
+| **scipy** | >=1.9.0 | Hungarian algorithm |
 | **numpy** | >=1.21 | Numerical computing |
 | **pandas** | >=1.3 | Data logging |
 | **tensorboard** | >=2.8 | Visualization |
 | **tqdm** | >=4.62 | Progress bars |
-
+| **matplotlib/seaborn** | >=3.5/0.11 | Plotting (optional)
 ---
 
 ## ⚠️ Common Issues & Solutions
@@ -123,10 +121,13 @@ drive.mount('/content/drive')
 ### Issue 1: PyTorch Geometric Installation Failed
 ```python
 # Solution: Install with explicit CUDA version
-!pip install torch==1.11.0+cu113 -f https://download.pytorch.org/whl/torch_stable.html
-!pip install torch-scatter torch-sparse torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cu113.html
+!pip insta 1: Install latest stable versions (recommended)
+!pip install torch torchvision torchaudio
 !pip install torch-geometric
-```
+
+# Solution 2: If still fails, install without CUDA extensions
+!pip install torch-geometric --no-deps
+!pip install torch scipy numpy pandas tqdm
 
 ### Issue 2: CUDA Out of Memory
 ```python
@@ -153,8 +154,7 @@ drive.mount('/content/drive')
 
 # Clone or navigate
 %cd /content/drive/MyDrive
-!git clone https://github.com/ctz1310204/HungGNN.git 2>/dev/null || %cd HungGNN
-
+!git clone https://gi torchvision torchaudio
 # Install
 !pip install -q torch==1.11.0
 !pip install -q torch-scatter torch-sparse torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cu113.html

@@ -73,5 +73,9 @@ comparison_results.txt
 log_paper_setup.csv
 
 .venv-1
-experiment/ 
+experiments/
 experiments/gnn_4x4_extreme_norm/README.md
+docs/
+# Experiment data and docs
+docs/
+experiments/

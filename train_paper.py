@@ -164,6 +164,8 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
         
         model.train()
         epoch_loss = 0
+        epoch_correct = 0  # Track train accuracy
+        epoch_total = 0
         
         # Online learning - batch size = 1
         for idx in tqdm(range(len(train_data)), desc=f"Epoch {epoch+1}"):
@@ -190,8 +192,15 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
             optimizer.step()
             
             epoch_loss += total_loss.item()
+            
+            # Calculate train accuracy
+            pred_labels = torch.argmax(pred, dim=1)
+            correct = (pred_labels == torch.from_numpy(c)).sum().item()
+            epoch_correct += correct
+            epoch_total += len(c)
         
         avg_loss = epoch_loss / len(train_data)
+        train_acc = epoch_correct / epoch_total  # Calculate train accuracy
         
         # Validation
         print('Validating...')
@@ -201,11 +210,13 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
         
         print(f'Epoch {epoch+1}/{epochs}:')
         print(f'  Train Loss: {avg_loss:.6f}')
+        print(f'  Train Accuracy: {train_acc*100:.2f}%')
         print(f'  Val Accuracy: {eval_acc*100:.2f}%')
         print(f'  Val Loss: {eval_loss:.6f}')
         
         # Log to TensorBoard
         logger.add_scalar('Train/Loss', avg_loss, epoch+1)
+        logger.add_scalar('Train/Accuracy', train_acc, epoch+1)  # Add train accuracy
         logger.add_scalar('Val/Accuracy', eval_acc, epoch+1)
         logger.add_scalar('Val/Loss', eval_loss, epoch+1)
         logger.add_scalar('Train/LearningRate', optimizer.param_groups[0]['lr'], epoch+1)

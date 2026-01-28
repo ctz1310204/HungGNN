@@ -89,13 +89,19 @@ time_forward_us = (time_forward / n_samples) * 1e6
 time_greedy_us = (time_greedy / n_samples) * 1e6
 time_hungarian_us = (time_hungarian / n_samples) * 1e6
 
+
 print('ACCURACY RESULTS')
 print('='*70)
-print(f'Element Accuracy (Before Greedy): {element_acc_before*100:.2f}%')
-print(f'Element Accuracy (After Greedy):  {element_acc_after*100:.2f}%')
-print(f'Full Row Accuracy (Before Greedy): {full_row_acc_before*100:.2f}%')
-print(f'Full Row Accuracy (After Greedy):  {full_row_acc_after*100:.2f}%')
+print('FULL ROW ACCURACY COMPARISON:')
+print(f'  Before Greedy: {full_row_acc_before*100:.2f}%')
+print(f'  After Greedy:  {full_row_acc_after*100:.2f}%')
+print(f'  Improvement:   {(full_row_acc_after-full_row_acc_before)*100:+.2f}%')
 print()
+print('ELEMENT ACCURACY:')
+print(f'  Before Greedy: {element_acc_before*100:.2f}%')
+print(f'  After Greedy:  {element_acc_after*100:.2f}%')
+print()
+
 
 print('TIMING RESULTS (Mean per sample)')
 print('='*70)

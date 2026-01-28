@@ -30,8 +30,19 @@ import torch
 from torch_geometric.data import Data
 from utils.logger import Logger  # TensorBoard logging
 
-def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
-    """Train hoặc resume training với paper configuration"""
+def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=None, hidden=None, 
+                     epochs=None, lr=None, weight_decay=None, train_samples=None, val_samples=None):
+    """Train hoặc resume training với paper configuration
+    
+    Args:
+        size: Problem size (NxN matrix), default 4
+        hidden: Hidden channels, default 32
+        epochs: Training epochs, default 50
+        lr: Learning rate, default 0.006
+        weight_decay: Weight decay, default 5e-4
+        train_samples: Number of training samples, default 80000
+        val_samples: Number of validation samples, default 20000
+    """
     
     # Get script directory for relative paths
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -50,23 +61,34 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
         os.makedirs(EXPERIMENT_FOLDER)
         print(f"✓ Created experiment folder: {EXPERIMENT_FOLDER}")
     
-    # Paper hyperparameters
+    # Paper hyperparameters (with overrides)
+    N = size if size is not None else 4
+    H = hidden if hidden is not None else 32
+    num_epochs = epochs if epochs is not None else 50
+    learning_rate = lr if lr is not None else 0.006
+    wd = weight_decay if weight_decay is not None else 5e-4
+    n_train = train_samples if train_samples is not None else 80000
+    n_val = val_samples if val_samples is not None else 20000
+    
     param_dict = {
-        'N': 4,
-        'H': 32,
+        'N': N,
+        'H': H,
         'K': 1
     }
     
     # Generate data nếu chưa có
     print("Checking data files...")
     
-    if not os.path.exists('data/train_paper_80k.npy'):
-        print("Generating 80K training samples (like paper)...")
-        generate_data(80000, param_dict, 'data/train_paper_80k.npy')
+    train_file = f'data/train_{N}x{N}_{n_train}.npy'
+    val_file = f'data/val_{N}x{N}_{n_val}.npy'
     
-    if not os.path.exists('data/val_paper_20k.npy'):
-        print("Generating 20K validation samples (like paper)...")
-        generate_data(20000, param_dict, 'data/val_paper_20k.npy')
+    if not os.path.exists(train_file):
+        print(f"Generating {n_train} training samples ({N}x{N})...")
+        generate_data(n_train, param_dict, train_file)
+    
+    if not os.path.exists(val_file):
+        print(f"Generating {n_val} validation samples ({N}x{N})...")
+        generate_data(n_val, param_dict, val_file)
     
     # GPU Auto-detection
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -124,8 +146,8 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
     # Optimizer với weight decay như paper
     optimizer = torch.optim.SGD(
         model.parameters(), 
-        lr=0.006,
-        weight_decay=5e-4
+        lr=learning_rate,
+        weight_decay=wd
     )
     
     # Scheduler: halve LR every 5 epochs
@@ -140,7 +162,7 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
         for _ in range(start_epoch):
             scheduler.step()
     
-    epochs = 50
+    epochs = num_epochs
     edge_index = get_adj(param_dict['N'])
     
     # Initialize TensorBoard logger
@@ -341,15 +363,31 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
     
     return model
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Train GNN-LSAP with Paper Setup')
-    parser.add_argument('--resume', action='store_true', 
-                        help='Resume training from checkpoint')
-    parser.add_argument('--resume_epoch', type=int, default=30,
-                        help='Epoch number to resume from (default: 30)')
-    parser.add_argument('--experiment_name', type=str, default=None,
-                        help='Experiment name (default: auto-generated with timestamp)')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='GNN-LSAP Training (Paper Setup)')
+    parser.add_argument('--resume', action='store_true', help='Resume from checkpoint')
+    parser.add_argument('--resume_epoch', type=int, default=0, help='Epoch to resume from')
+    parser.add_argument('--experiment_name', type=str, default=None, help='Experiment name')
+    # New arguments for configurability
+    parser.add_argument('--size', type=int, default=None, help='Problem size (NxN matrix, default: 4)')
+    parser.add_argument('--hidden', type=int, default=None, help='Hidden channels (default: 32)')
+    parser.add_argument('--epochs', type=int, default=None, help='Training epochs (default: 50)')
+    parser.add_argument('--lr', type=float, default=None, help='Learning rate (default: 0.006)')
+    parser.add_argument('--weight_decay', type=float, default=None, help='Weight decay (default: 5e-4)')
+    parser.add_argument('--train_samples', type=int, default=None, help='Training samples (default: 80000)')
+    parser.add_argument('--val_samples', type=int, default=None, help='Validation samples (default: 20000)')
+    
     args = parser.parse_args()
     
-    model = train_paper_setup(resume=args.resume, resume_epoch=args.resume_epoch,
-                          experiment_name=args.experiment_name)
+    train_paper_setup(
+        resume=args.resume, 
+        resume_epoch=args.resume_epoch, 
+        experiment_name=args.experiment_name,
+        size=args.size,
+        hidden=args.hidden,
+        epochs=args.epochs,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        train_samples=args.train_samples,
+        val_samples=args.val_samples
+    )

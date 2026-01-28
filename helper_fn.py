@@ -30,7 +30,11 @@ def avoid_coll(prednp, param_dict):
     return np.argmax(pp, axis=1)
 
 
-def validate_fixed_fn(model, loss_fn, val_data, param_dict):
+def validate_fixed_fn(model, loss_fn, val_data, param_dict, device=None):
+    """Validation function with GPU support"""
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     eval_correct = 0
     eval_loss = 0
     edge_index = get_adj(param_dict['N'])
@@ -38,16 +42,16 @@ def validate_fixed_fn(model, loss_fn, val_data, param_dict):
     for v_idx in range(len(val_data)):
         correct = 0
         cost_matrix = val_data[v_idx]
-        x = torch.from_numpy(np.concatenate((cost_matrix, cost_matrix.T), axis=0)).float()
-        G = Data(x, edge_index)
+        x = torch.from_numpy(np.concatenate((cost_matrix, cost_matrix.T), axis=0)).float().to(device)
+        G = Data(x, edge_index.to(device))
         r, c = linear_sum_assignment(cost_matrix)  # truth
         pred = model(G.x, G.edge_index)  # predicted
-        loss_1 = loss_fn(pred, torch.from_numpy(c))
+        loss_1 = loss_fn(pred, torch.from_numpy(c).to(device))
         d = np.argsort(c)
-        loss_2 = loss_fn(pred.T, torch.from_numpy(d))
+        loss_2 = loss_fn(pred.T, torch.from_numpy(d).to(device))
         # FIX: Accumulate total loss (CrossEntropyLoss already averages over batch)
         eval_loss += (loss_1.item() + loss_2.item())
-        t_idx = avoid_coll(pred.detach().numpy(), param_dict)
+        t_idx = avoid_coll(pred.detach().cpu().numpy(), param_dict)  # Move to CPU for numpy
         # soft threshold criterion
         for a_idx in range(param_dict['N']):
             if t_idx[a_idx] == c[a_idx]:

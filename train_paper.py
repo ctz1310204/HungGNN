@@ -68,16 +68,25 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
         print("Generating 20K validation samples (like paper)...")
         generate_data(20000, param_dict, 'data/val_paper_20k.npy')
     
+    # GPU Auto-detection
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"\n Device: {device}")
+    if torch.cuda.is_available():
+        print(f"   GPU: {torch.cuda.get_device_name(0)}")
+        print(f"   CUDA Version: {torch.version.cuda}")
+    else:
+        print(f"     GPU not available, using CPU")
+    
     # Load data
-    print("Loading data...")
+    print("\nLoading data...")
     train_data = np.load('data/train_paper_80k.npy')
     val_data = np.load('data/val_paper_20k.npy')
     
     print(f"Train: {train_data.shape[0]} samples")
     print(f"Val: {val_data.shape[0]} samples")
     
-    # Model
-    model = HGNN(param_dict['N'], param_dict['H'], param_dict['N'])
+    # Model - Move to GPU if available
+    model = HGNN(param_dict['N'], param_dict['H'], param_dict['N']).to(device)
     loss_fn = torch.nn.CrossEntropyLoss()
     
     # Load checkpoint nếu resume
@@ -172,8 +181,8 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
             optimizer.zero_grad()
             
             cost_matrix = train_data[idx]
-            x = torch.from_numpy(np.concatenate((cost_matrix, cost_matrix.T), axis=0)).float()
-            G = Data(x, edge_index)
+            x = torch.from_numpy(np.concatenate((cost_matrix, cost_matrix.T), axis=0)).float().to(device)
+            G = Data(x, edge_index.to(device))
             
             # Hungarian ground truth
             r, c = linear_sum_assignment(cost_matrix)
@@ -182,9 +191,9 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
             pred = model(G.x, G.edge_index)
             
             # Bidirectional loss
-            loss_1 = loss_fn(pred, torch.from_numpy(c))
+            loss_1 = loss_fn(pred, torch.from_numpy(c).to(device))
             d = np.argsort(c)
-            loss_2 = loss_fn(pred.T, torch.from_numpy(d))
+            loss_2 = loss_fn(pred.T, torch.from_numpy(d).to(device))
             total_loss = loss_1 + loss_2
             
             # Backward
@@ -195,7 +204,7 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
             
             # Calculate train accuracy
             pred_labels = torch.argmax(pred, dim=1)
-            correct = (pred_labels == torch.from_numpy(c)).sum().item()
+            correct = (pred_labels == torch.from_numpy(c).to(device)).sum().item()
             epoch_correct += correct
             epoch_total += len(c)
         
@@ -204,7 +213,7 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
         
         # Validation
         print('Validating...')
-        eval_acc, eval_loss = validate_fixed_fn(model, loss_fn, val_data, param_dict)
+        eval_acc, eval_loss = validate_fixed_fn(model, loss_fn, val_data, param_dict, device)
         eval_acc_list.append(eval_acc)
         eval_loss_list.append(eval_loss)
         
@@ -213,6 +222,11 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None):
         print(f'  Train Accuracy: {train_acc*100:.2f}%')
         print(f'  Val Accuracy: {eval_acc*100:.2f}%')
         print(f'  Val Loss: {eval_loss:.6f}')
+        
+        # GPU Memory usage
+        if torch.cuda.is_available():
+            print(f'  GPU Memory: {torch.cuda.max_memory_allocated()/1024**3:.2f} GB')
+            torch.cuda.reset_peak_memory_stats()
         
         # Log to TensorBoard
         logger.add_scalar('Train/Loss', avg_loss, epoch+1)

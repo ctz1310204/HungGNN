@@ -55,8 +55,9 @@ python train_paper.py
 
 ---
 
-## 💾 Persistent Storage with Google Drive
+## 💾 Storage Options - Save Your Models
 
+### Option 1: Google Drive (Simple)
 ```python
 # Mount Google Drive
 from google.colab import drive
@@ -67,16 +68,91 @@ drive.mount('/content/drive')
 !git clone https://github.com/ctz1310204/HungGNN.git
 %cd HungGNN
 
-# Install dependencies (still required each session)
-!pip install -q torch==1.11.0
-!pip install -q torch torchvision torchaudio
-
 # Train - models saved to Drive
 !python train_paper.py
 
-# Models will be saved at:
-# /content/drive/MyDrive/HungGNN/experiments/
+# Models at: /content/drive/MyDrive/HungGNN/experiments/
 ```
+
+### Option 2: Push to GitHub (No Drive!)
+```python
+# Train in fast temp storage
+%cd /content
+!git clone https://github.com/YOUR_USERNAME/GNN_LSAP.git
+%cd GNN_LSAP
+
+!pip install torch-geometric scipy pandas tqdm
+!python train_paper.py
+
+# Configure Git
+!git config --global user.email "your@email.com"
+!git config --global user.name "Your Name"
+
+# Push models to GitHub
+!git add experiments/
+!git commit -m "Add trained GNN models"
+!git push https://YOUR_TOKEN@github.com/YOUR_USERNAME/GNN_LSAP.git main
+```
+
+### Option 3: Weights & Biases (Recommended)
+```python
+!pip install wandb
+import wandb
+wandb.login()
+
+# Add to train_paper.py:
+# wandb.init(project="gnn-lsap")
+# wandb.log({"train_acc": acc, "val_acc": val_acc})
+
+# View experiments at wandb.ai
+```
+
+### GitHub with Large Files (Git LFS)
+```python
+# For models > 100MB
+!apt-get install git-lfs
+!git lfs install
+
+# Track large files
+!git lfs track "*.pth"
+!git lfs track "experiments/**/*.pth"
+
+!git add .gitattributes
+!git add experiments/
+!git commit -m "Add trained models with LFS"
+!git push
+```
+
+### Automated Backup Script
+```python
+# Save as auto_backup.sh in repo
+backup_script = '''
+#!/bin/bash
+EXP_DIR="experiments/gnn_4x4_original"
+git add $EXP_DIR/trained_net_*.pth
+git add $EXP_DIR/logs/
+git commit -m "Checkpoint: $(date +%Y%m%d_%H%M%S)"
+git push
+echo "✅ Backed up to GitHub!"
+'''
+
+with open('auto_backup.sh', 'w') as f:
+    f.write(backup_script)
+
+!chmod +x auto_backup.sh
+
+# Run after training
+!./auto_backup.sh
+```
+
+### Comparison
+
+| Method | Speed | Storage | Setup | Best For |
+|--------|-------|---------|-------|----------|
+| **Google Drive** | 🐢 Slow | 15GB | Easy | Personal |
+| **GitHub** | 🚀 Fast | 100MB/file | Medium | Code + small models |
+| **Git LFS** | 🚀 Fast | 2GB free | Medium | Large models |
+| **Wandb** | 🚀 Fast | 100GB | Easy | Experiments |
 
 ---
 

@@ -24,6 +24,7 @@ from tqdm import tqdm
 from scipy.optimize import linear_sum_assignment
 import pandas as pd
 import os
+import time
 from helper_fn import validate_fixed_fn, get_adj, generate_data
 from networks import HGNN
 import torch
@@ -104,8 +105,8 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
     
     # Load data
     print("\nLoading data...")
-    train_data = np.load('data/train_paper_80k.npy')
-    val_data = np.load('data/val_paper_20k.npy')
+    train_data = np.load(train_file)
+    val_data = np.load(val_file)
     
     print(f"Train: {train_data.shape[0]} samples")
     print(f"Val: {val_data.shape[0]} samples")
@@ -306,7 +307,6 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
     print("MEASURING INFERENCE TIME (Paper Methodology)")
     print("="*70)
     
-    import time
     from helper_fn import avoid_coll
     
     test_data = np.load('data/test_4x4.npy')

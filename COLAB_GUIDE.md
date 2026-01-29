@@ -267,6 +267,131 @@ files.download('results.zip')
 
 ---
 
+## 🔄 Resume Training from Checkpoint
+
+### Resume from Specific Epoch
+```python
+%cd /content/drive/MyDrive/GNN_LSAP
+
+# Resume training from epoch 30
+!python train_paper.py --exp-name my_gnn_experiment --resume --resume_epoch 30 --epochs 50
+
+# Output:
+# ✓ Loaded checkpoint from epoch 30
+# Continuing training: epochs 31 → 50
+```
+
+### Resume Latest Training
+```python
+# Resume from epoch 40, continue to 50
+!python train_paper.py --exp-name gnn_4x4_20260129 --resume --resume_epoch 40 --epochs 50
+```
+
+### Check Available Checkpoints
+```python
+# See what checkpoints exist
+!ls experiments/my_gnn_experiment/
+
+# Output:
+# trained_net_paper_setup_epoch10.pth
+# trained_net_paper_setup_epoch20.pth
+# trained_net_paper_setup_epoch30.pth
+# trained_net_paper_setup_epoch40.pth
+# best_model.pth  ← Best validation accuracy
+# log_paper_setup.csv
+# logs/
+```
+
+**💡 How it works:**
+- Saves checkpoint every 10 epochs
+- Saves **best model** whenever validation accuracy improves
+- Use `--resume_epoch` to continue from any checkpoint
+- Best model updated automatically throughout training
+
+---
+
+## 🧪 Testing & Evaluation
+
+### Test with Best Model (Recommended)
+```python
+%cd /content/drive/MyDrive/GNN_LSAP
+
+# Test using BEST model (highest validation accuracy)
+!python test_model.py --exp-name my_gnn_experiment --checkpoint best --size 4
+
+# Output:
+# ======================================================================
+# COMPREHENSIVE TEST - GNN_LSAP
+# ======================================================================
+# Experiment: my_gnn_experiment
+# Model: best_model.pth
+# Problem size: 4x4
+# Device: cuda
+# ======================================================================
+# 
+# ✓ Model loaded successfully
+# 
+# Test samples: 10000
+# 
+# ======================================================================
+# TEST RESULTS
+# ======================================================================
+# Samples tested: 10000
+# 
+# ACCURACY:
+#   Element Acc (Raw argmax):    87.50%
+#   Element Acc (After greedy):  92.30%
+#   Full Row Acc (Raw):          65.20%
+#   Full Row Acc (After greedy): 78.40%
+# 
+# PERFORMANCE:
+#   Avg Loss:            0.234567
+#   Forward time:        1.234 ms/sample
+#   Greedy time:         0.456 ms/sample
+#   Hungarian time:      0.789 ms/sample
+# ======================================================================
+# 
+# GREEDY IMPROVEMENT:
+#   Element accuracy: +4.80%
+#   Full row accuracy: +13.20%
+# ======================================================================
+```
+
+### Test with Specific Checkpoint
+```python
+# Test checkpoint from epoch 30
+!python test_model.py --exp-name my_gnn_experiment --checkpoint epoch30 --size 4
+
+# Available checkpoints: best, epoch10, epoch20, epoch30, epoch40, epoch50
+```
+
+### Test Different Problem Sizes
+```python
+# Test 8x8 problem
+!python test_model.py --exp-name gnn_8x8_exp --checkpoint best --size 8
+
+# Test 2x2 problem
+!python test_model.py --exp-name gnn_2x2_exp --checkpoint best --size 2
+```
+
+### Test with Limited Samples (Faster)
+```python
+# Test on only 1000 samples (for quick validation)
+!python test_model.py --exp-name my_gnn_experiment --checkpoint best --size 4 --test-samples 1000
+
+# Useful for quick accuracy check
+```
+
+### Generate Test Data Automatically
+```python
+# If test data doesn't exist, it will be generated automatically
+# Default: 10,000 test samples
+
+# Test data saved to: data/test_4x4.npy
+```
+
+---
+
 ## 🔄 Multi-Session Training
 
 ```python

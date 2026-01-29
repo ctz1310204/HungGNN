@@ -191,10 +191,11 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
     print(f"TensorBoard: {logger.writer.log_dir if logger.writer else 'disabled'}")
     print("="*70 + "\n")
     
+    # Track best validation accuracy
+    best_val_acc = 0.0
+    
     for epoch in range(start_epoch, epochs):
-        print(f'\nEpoch {epoch+1}/{epochs}')
-        print(f'Current LR: {optimizer.param_groups[0]["lr"]:.6f}')
-        print('Training...')
+        epoch_start_time = time.time()  # Start epoch timer
         
         model.train()
         epoch_loss = 0
@@ -237,27 +238,30 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
         train_acc = epoch_correct / epoch_total  # Calculate train accuracy
         
         # Validation
-        print('Validating...')
         eval_acc, eval_loss = validate_fixed_fn(model, loss_fn, val_data, param_dict, device)
         eval_acc_list.append(eval_acc)
         eval_loss_list.append(eval_loss)
         
-        print(f'Epoch {epoch+1}/{epochs}:')
-        print(f'  Train Loss: {avg_loss:.6f}')
-        print(f'  Train Accuracy: {train_acc*100:.2f}%')
-        print(f'  Val Accuracy: {eval_acc*100:.2f}%')
-        print(f'  Val Loss: {eval_loss:.6f}')
+        # Calculate epoch time
+        epoch_time = time.time() - epoch_start_time
         
-        # GPU Memory usage
-        if torch.cuda.is_available():
-            print(f'  GPU Memory: {torch.cuda.max_memory_allocated()/1024**3:.2f} GB')
-            torch.cuda.reset_peak_memory_stats()
+        # Simple one-line output like wcl_lsap
+        print(f'  Epoch {epoch+1:2d}/{epochs} | Loss: {eval_loss:.4f} | Val Acc: {eval_acc:.4f} | Time: {epoch_time:.1f}s', end="")
+        
+        # Save best model if improved
+        if eval_acc > best_val_acc:
+            best_val_acc = eval_acc
+            torch.save(model.state_dict(), os.path.join(EXPERIMENT_FOLDER, 'best_model.pth'))
+            print(" ← Best!")
+        else:
+            print()
         
         # Log to TensorBoard
         logger.add_scalar('Train/Loss', avg_loss, epoch+1)
         logger.add_scalar('Train/Accuracy', train_acc, epoch+1)  # Add train accuracy
         logger.add_scalar('Val/Accuracy', eval_acc, epoch+1)
         logger.add_scalar('Val/Loss', eval_loss, epoch+1)
+        logger.add_scalar('Val/BestAccuracy', best_val_acc, epoch+1)
         logger.add_scalar('Train/LearningRate', optimizer.param_groups[0]['lr'], epoch+1)
         
         # Step scheduler
@@ -268,8 +272,12 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
             torch.save(model.state_dict(), os.path.join(EXPERIMENT_FOLDER, f'trained_net_paper_setup_epoch{epoch+1}.pth'))
             print(f'  → Checkpoint saved: epoch {epoch+1}')
     
-    # Save final model
-    torch.save(model.state_dict(), os.path.join(EXPERIMENT_FOLDER, 'trained_net_paper_setup_final.pth'))
+    # Training completed
+    print(f"\n{'='*70}")
+    print(f"TRAINING COMPLETED!")
+    print(f"Best Validation Accuracy: {best_val_acc:.4f}")
+    print(f"Best model saved to: {os.path.join(EXPERIMENT_FOLDER, 'best_model.pth')}")
+    print(f"{'='*70}\n")
     
     # Close logger
     logger.close()

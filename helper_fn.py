@@ -97,17 +97,21 @@ def generate_data(n_samples, param_dict, fname):
     
     For N=4: Always generates 4x4 matrices, no padding, no normalization.
     """
+    # Create directory if it doesn't exist
+    import os
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    
     N = param_dict['N']
     
     print(f'Generating {n_samples} samples (fixed {N}x{N} matrices)...')
     
     # Generate first sample
-    cost_matrix = np.random.uniform(-100, 100, (N, N))
+    cost_matrix = np.random.uniform(-1, 1, (N, N))
     cm = cost_matrix.reshape(1, N, N)
     
     # Generate remaining samples
     for t in tqdm(range(1, n_samples)):
-        cost_matrix = np.random.uniform(-100, 100, (N, N))
+        cost_matrix = np.random.uniform(-1, 1, (N, N))
         cm2 = cost_matrix.reshape(1, N, N)
         cm = np.concatenate((cm, cm2), axis=0)
     

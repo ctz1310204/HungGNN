@@ -46,6 +46,18 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
     
     # Get script directory for relative paths
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    # Device configuration
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if torch.cuda.is_available():
+        print("Using GPU for training")
+        print(f"   Device: {device}")
+        print(f"   GPU: {torch.cuda.get_device_name(0)}")
+        print(f"   CUDA Version: {torch.version.cuda}")
+    else:
+        print("Using CPU for training")
+        print(f"   Device: {device}")
+    print() 
     
     # Generate experiment name if not provided
     if experiment_name is None:
@@ -89,15 +101,6 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
     if not os.path.exists(val_file):
         print(f"Generating {n_val} validation samples ({N}x{N})...")
         generate_data(n_val, param_dict, val_file)
-    
-    # GPU Auto-detection
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"\n Device: {device}")
-    if torch.cuda.is_available():
-        print(f"   GPU: {torch.cuda.get_device_name(0)}")
-        print(f"   CUDA Version: {torch.version.cuda}")
-    else:
-        print(f"     GPU not available, using CPU")
     
     # Load data
     print("\nLoading data...")

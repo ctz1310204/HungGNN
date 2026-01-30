@@ -310,7 +310,7 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
     
     from helper_fn import avoid_coll
     
-    test_data = np.load('data/test_4x4.npy')
+    test_data = np.load(f'data/test_{N}x{N}.npy')  # Use dynamic size
     n_runs = min(5000, len(test_data))
     
     model.eval()

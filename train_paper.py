@@ -59,12 +59,13 @@ def train_paper_setup(resume=False, resume_epoch=0, experiment_name=None, size=N
         print("Using CPU for training")
         print(f"   Device: {device}")
     print() 
-    
+
     # Generate experiment name if not provided
     if experiment_name is None:
         from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        experiment_name = f'gnn_4x4_{timestamp}'
+        N_temp = size if size is not None else 4  # Get size for experiment name
+        experiment_name = f'gnn_{N_temp}x{N_temp}_{timestamp}'
     
     # Create experiment folder path
     EXPERIMENT_FOLDER = os.path.join(SCRIPT_DIR, "experiments", experiment_name)

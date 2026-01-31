@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--exp-name', type=str, required=True,
                        help='Experiment name (folder in experiments/)')
     parser.add_argument('--checkpoint', type=str, default='best',
-                       choices=['best', 'epoch10', 'epoch20', 'epoch30', 'epoch40', 'epoch50'],
+                       choices=['best', 'final', 'epoch10', 'epoch20', 'epoch30', 'epoch40', 'epoch50'],
                        help='Which checkpoint to load (default: best)')
     parser.add_argument('--size', type=int, default=4,
                        help='Problem size (NxN matrix, default: 4)')
@@ -40,9 +40,11 @@ def main():
     # Model path
     if args.checkpoint == 'best':
         model_path = os.path.join(exp_folder, 'best_model.pth')
+    elif args.checkpoint == 'final':
+        model_path = os.path.join(exp_folder, 'models', 'trained_net_paper_setup_final.pth')
     else:
         epoch_num = args.checkpoint.replace('epoch', '')
-        model_path = os.path.join(exp_folder, f'trained_net_paper_setup_epoch{epoch_num}.pth')
+        model_path = os.path.join(exp_folder, 'models', f'trained_net_paper_setup_epoch{epoch_num}.pth')
     
     if not os.path.exists(model_path):
         print(f"ERROR: Model file not found: {model_path}")
@@ -55,6 +57,8 @@ def main():
     # GPU support
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
+    print('\n' + '='*70)
+    print(f'TESTING: {args.exp_name.upper()} | SIZE: {args.size}x{args.size}')
     print('='*70)
     print('COMPREHENSIVE TEST - GNN_LSAP')
     print('='*70)

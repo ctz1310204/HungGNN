@@ -41,7 +41,7 @@ def main():
     if args.checkpoint == 'best':
         model_path = os.path.join(exp_folder, 'best_model.pth')
     elif args.checkpoint == 'final':
-        model_path = os.path.join(exp_folder, 'models', 'trained_net_paper_setup_final.pth')
+        model_path = os.path.join(exp_folder, 'trained_net_paper_setup_final.pth')
     else:
         epoch_num = args.checkpoint.replace('epoch', '')
         model_path = os.path.join(exp_folder, 'models', f'trained_net_paper_setup_epoch{epoch_num}.pth')
